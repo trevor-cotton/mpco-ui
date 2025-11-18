@@ -1,0 +1,17 @@
+{
+  "name": "mpco-ui",
+  "version": "1.0.0",
+  "description": "Mousepad Production Management System",
+  "private": true,
+  "scripts": {
+    "backend:dev": "cd backend && npm run start:dev",
+    "backend:build": "cd backend && npm run build",
+    "backend:start": "cd backend && npm run start:prod",
+    "frontend:dev": "cd frontend && npm start",
+    "frontend:build": "cd frontend && npm run build",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
