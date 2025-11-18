@@ -5,12 +5,13 @@ import { PrintingService } from './printing.service';
 import { PrintQueue } from '../../entities/print-queue.entity';
 import { PrintedSheet } from '../../entities/printed-sheet.entity';
 import { Printer } from '../../entities/printer.entity';
+import { PrintJob } from '../../entities/print-job.entity';
 import { PrinterService } from '../../integrations/printer.service';
 import { LabelPrintingModule } from '../label-printing/label-printing.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([PrintQueue, PrintedSheet, Printer]),
+    TypeOrmModule.forFeature([PrintQueue, PrintedSheet, Printer, PrintJob]),
     LabelPrintingModule,
   ],
   controllers: [PrintingController],
