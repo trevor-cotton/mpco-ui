@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { AuthModule } from './auth/auth.module';
 import { OrderProcessingModule } from './modules/order-processing/order-processing.module';
 import { PrintQueueModule } from './modules/print-queue/print-queue.module';
@@ -28,6 +30,10 @@ const parsedDbUrl = databaseUrl ? new URL(databaseUrl) : undefined;
 
 @Module({
   imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', '..', 'frontend', 'build'),
+      exclude: ['/api*'],
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
