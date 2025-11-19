@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { PrintQueue, PrintQueueStatus } from '../../entities/print-queue.entity';
 import { PrintJob, PrintJobStatus } from '../../entities/print-job.entity';
 
@@ -13,6 +13,7 @@ export class PrintQueueService {
     private printQueueRepository: Repository<PrintQueue>,
     @InjectRepository(PrintJob)
     private printJobRepository: Repository<PrintJob>,
+    private dataSource: DataSource,
   ) {}
 
   async getPendingJobs(): Promise<PrintQueue[]> {
@@ -31,21 +32,61 @@ export class PrintQueueService {
   }
 
   async createBatch(jobIds: string[]): Promise<string> {
-    const batchId = `batch-${Date.now()}`;
-    
-    for (const jobId of jobIds) {
-      const printQueue = await this.printQueueRepository.findOne({
-        where: { id: jobId },
-      });
-      
-      if (printQueue) {
-        printQueue.batchId = batchId;
-        printQueue.status = PrintQueueStatus.BATCHED;
-        await this.printQueueRepository.save(printQueue);
-      }
+    // Validate input
+    if (!jobIds || jobIds.length === 0) {
+      throw new BadRequestException('At least one job ID must be provided');
     }
 
-    return batchId;
+    if (jobIds.length > 50) {
+      throw new BadRequestException('Cannot batch more than 50 jobs at once');
+    }
+
+    const batchId = `batch-${Date.now()}`;
+
+    // Use transaction to ensure atomicity
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const updatedJobs: PrintQueue[] = [];
+
+      for (const jobId of jobIds) {
+        const printQueue = await queryRunner.manager.findOne(PrintQueue, {
+          where: { id: jobId },
+        });
+
+        if (!printQueue) {
+          throw new NotFoundException(`Print queue job with ID ${jobId} not found`);
+        }
+
+        if (printQueue.status !== PrintQueueStatus.PENDING) {
+          throw new BadRequestException(`Job ${jobId} is not in PENDING status`);
+        }
+
+        if (printQueue.batchId) {
+          throw new BadRequestException(`Job ${jobId} is already part of another batch`);
+        }
+
+        printQueue.batchId = batchId;
+        printQueue.status = PrintQueueStatus.BATCHED;
+        updatedJobs.push(printQueue);
+      }
+
+      // Save all jobs in the transaction
+      await queryRunner.manager.save(PrintQueue, updatedJobs);
+
+      await queryRunner.commitTransaction();
+      this.logger.log(`Created batch ${batchId} with ${jobIds.length} jobs`);
+
+      return batchId;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.logger.error(`Failed to create batch: ${error.message}`, error.stack);
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async getBatchJobs(batchId: string): Promise<PrintQueue[]> {
