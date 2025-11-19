@@ -48,7 +48,7 @@ export class AdminPanelService {
     return this.printerRepository.find();
   }
 
-  async updatePrinter(id: string, updates: Partial<Printer>): Promise<Printer> {
+  async updatePrinter(id: string, updates: Partial<Printer>): Promise<Printer | null> {
     await this.printerRepository.update(id, updates);
     return this.printerRepository.findOne({ where: { id } });
   }
@@ -71,7 +71,7 @@ export class AdminPanelService {
     return this.systemConfigRepository.save(config);
   }
 
-  async getConfig(key: string): Promise<SystemConfig> {
+  async getConfig(key: string): Promise<SystemConfig | null> {
     return this.systemConfigRepository.findOne({ where: { key } });
   }
 
@@ -84,7 +84,7 @@ export class AdminPanelService {
     return this.userRepository.find({ select: ['id', 'email', 'role', 'createdAt'] });
   }
 
-  async updateUserRole(userId: string, role: UserRole): Promise<User> {
+  async updateUserRole(userId: string, role: UserRole): Promise<User | null> {
     await this.userRepository.update(userId, { role });
     return this.userRepository.findOne({ where: { id: userId } });
   }
@@ -145,9 +145,9 @@ export class AdminPanelService {
     return {
       total: orders.length,
       byStatus: orders.reduce((acc, order) => {
-        acc[order.status] = (acc[order.status] || 0) + 1;
+        acc[order.status] = ((acc[order.status] as number) || 0) + 1;
         return acc;
-      }, {}),
+      }, {} as Record<string, number>),
     };
   }
 

@@ -70,7 +70,7 @@ export class LabelPrintingService {
     return savedLabel;
   }
 
-  async getShippingLabel(orderId: string): Promise<ShippingLabel> {
+  async getShippingLabel(orderId: string): Promise<ShippingLabel | null> {
     return this.shippingLabelRepository.findOne({
       where: { orderId },
     });

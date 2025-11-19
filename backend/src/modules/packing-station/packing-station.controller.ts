@@ -27,7 +27,7 @@ export class PackingStationController {
 
   @Post('complete')
   async completePacking(
-    @Request() req,
+    @Request() req: any,
     @Body('orderId') orderId: string,
     @Body('verified') verified: boolean = true,
   ) {

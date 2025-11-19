@@ -76,7 +76,7 @@ export class OrderProcessingService {
     });
   }
 
-  async getOrderById(id: string): Promise<Order> {
+  async getOrderById(id: string): Promise<Order | null> {
     return this.orderRepository.findOne({
       where: { id },
       relations: ['printJobs', 'shippingLabels', 'packedOrders', 'errorLogs'],
