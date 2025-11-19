@@ -23,6 +23,9 @@ import { ErrorLog } from './entities/error-log.entity';
 import { Printer } from './entities/printer.entity';
 import { SystemConfig } from './entities/system-config.entity';
 
+const databaseUrl = process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL;
+const parsedDbUrl = databaseUrl ? new URL(databaseUrl) : undefined;
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -30,11 +33,33 @@ import { SystemConfig } from './entities/system-config.entity';
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432'),
-      username: process.env.DB_USERNAME || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
-      database: process.env.DB_NAME || 'mpco',
+      host:
+        process.env.DB_HOST ||
+        process.env.PGHOST ||
+        parsedDbUrl?.hostname ||
+        'localhost',
+      port: parseInt(
+        process.env.DB_PORT ||
+          process.env.PGPORT ||
+          parsedDbUrl?.port ||
+          '5432',
+        10,
+      ),
+      username:
+        process.env.DB_USERNAME ||
+        process.env.PGUSER ||
+        parsedDbUrl?.username ||
+        'postgres',
+      password:
+        process.env.DB_PASSWORD ||
+        process.env.PGPASSWORD ||
+        parsedDbUrl?.password ||
+        'postgres',
+      database:
+        process.env.DB_NAME ||
+        process.env.PGDATABASE ||
+        parsedDbUrl?.pathname?.replace('/', '') ||
+        'mpco',
       entities: [
         User,
         Order,
