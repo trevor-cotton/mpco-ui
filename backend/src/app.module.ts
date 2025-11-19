@@ -32,7 +32,7 @@ const parsedDbUrl = databaseUrl ? new URL(databaseUrl) : undefined;
   imports: [
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'frontend', 'build'),
-      exclude: ['/api*'],
+      exclude: ['/api/(.*)'],
     }),
     ConfigModule.forRoot({
       isGlobal: true,
